@@ -8,7 +8,6 @@ const button = document.getElementById('generate').addEventListener('click', asy
     try { 
     const zipCode = document.getElementById('zip').value
     const content = document.getElementById('feelings').value
-    const apiUrl = `http://api.openweathermap.org/data/2.5/weather?zip=${zipCode}&appid=${apiKey}&units=metric`
     if(!zipCode) {
         alert('Enter zip code')
         return
@@ -19,29 +18,76 @@ const button = document.getElementById('generate').addEventListener('click', asy
         return
     }
 
-        const res = await fetch(apiUrl)
-        const weatherTemp = await res.json()
-        const temp = weatherTemp.main.temp
+getWeatherTemp(zipCode)
+ .then((temp) => {
+    postData(temp, content)
+ })
+ .then(() => {
+    return getDate()
+ })
+ .then((finalData) => {
+        updateUI(finalData)
+   
+    })
 
 
-        await fetch('/postWeatherData', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                date: newDate,
-                temp: temp,
-                content: content
-            
-            })
-         });
+
+
+       
+         
      
-  const newRes = await fetch('getWeatherData')
-  const finalRes = await newRes.json()
-  console.log(finalRes);
+  
     }catch(error) {
     console.log('error', error);
 
     } 
+})   
+      
+
+async function getWeatherTemp(zipCode) {
+    const apiUrl = `http://api.openweathermap.org/data/2.5/weather?zip=${zipCode}&appid=${apiKey}&units=metric`
+
+    const res = await fetch(apiUrl)
+    const weatherTemp = await res.json()
+    const temp = weatherTemp.main.temp
+    return temp
+}
+
+
+async function postData(temp, content) {
+    await fetch('/postWeatherData', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            date: newDate,
+            temp: temp,
+            content: content
+        
+        })
 })
+}
+    
+            
+
+
+
+async function getDate(){
+    const newRes = await fetch('/getWeatherData');
+    const finalRes = await newRes.json();
+    return (finalRes);
+ }
+
+ const updateUI = async () => {
+    const request = await fetch('/getWeatherData');
+    try{
+      const allData = await request.json();
+      document.getElementById('date').innerHTML = newDate;
+      document.getElementById('temp').innerHTML = allData.temp;
+      document.getElementById('content').innerHTML = allData.content;
+  
+    }catch(error){
+      console.log("error", error);
+    }
+}
